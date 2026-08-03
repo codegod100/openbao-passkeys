@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OpenBao Passkeys — Settings</title>
+    <link rel="stylesheet" href="../shared/ui.css" />
+  </head>
+  <body>
+    <div class="page">
+      <div class="brand">
+        <img src="../../icons/icon48.png" alt="" />
+        <div>
+          <h1>OpenBao connection</h1>
+          <p class="lead">Credentials are written to a KV v2 mount. Token auth is simplest; AppRole is supported for longer-lived setups.</p>
+        </div>
+      </div>
+
+      <form class="card stack" id="form">
+        <label class="field">
+          OpenBao URL
+          <input id="openbaoUrl" type="url" required placeholder="http://127.0.0.1:8200" />
+        </label>
+
+        <label class="field">
+          Auth method
+          <select id="authMethod">
+            <option value="token">Token</option>
+            <option value="approle">AppRole</option>
+          </select>
+        </label>
+
+        <div id="tokenFields" class="stack">
+          <label class="field">
+            Token
+            <input id="token" type="password" autocomplete="off" />
+          </label>
+        </div>
+
+        <div id="approleFields" class="stack" hidden>
+          <label class="field">
+            Role ID
+            <input id="roleId" type="text" autocomplete="off" />
+          </label>
+          <label class="field">
+            Secret ID
+            <input id="secretId" type="password" autocomplete="off" />
+          </label>
+        </div>
+
+        <label class="field">
+          KV v2 mount
+          <input id="kvMount" type="text" required />
+        </label>
+
+        <label class="field">
+          Path prefix
+          <input id="pathPrefix" type="text" required />
+        </label>
+
+        <div class="actions">
+          <button class="btn" type="submit">Save</button>
+          <button class="btn secondary" id="testBtn" type="button">Test connection</button>
+        </div>
+        <p class="status" id="status"></p>
+      </form>
+
+      <section class="card stack" style="margin-top: 14px">
+        <strong>OpenBao path layout</strong>
+        <p class="muted">
+          Each passkey is stored at
+          <code>&lt;mount&gt;/data/&lt;prefix&gt;/&lt;credentialId&gt;</code>
+          with the private key as a JWK plus WebAuthn metadata (rpId, user handle, sign count).
+        </p>
+      </section>
+    </div>
+    <script type="module" src="./options.js"></script>
+  </body>
+</html>

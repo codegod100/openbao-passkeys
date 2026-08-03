@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "OpenBao Passkeys",
+  "version": "0.1.0",
+  "description": "Software passkey authenticator that stores credentials in OpenBao.",
+  "minimum_chrome_version": "115",
+  "permissions": [
+    "storage",
+    "tabs",
+    "webAuthenticationProxy",
+    "notifications",
+    "alarms"
+  ],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
+  "background": {
+    "service_worker": "src/background/service-worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "OpenBao Passkeys",
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "options_ui": {
+    "page": "src/options/options.html",
+    "open_in_tab": true
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
