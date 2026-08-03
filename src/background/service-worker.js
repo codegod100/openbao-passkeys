@@ -1,6 +1,7 @@
 import { deletePasskey, findPasskeysForRp, listPasskeys, testConnection } from "../lib/openbao.js";
 import {
   deletePassword,
+  getPassword,
   getPasswordsForOrigin,
   listPasswords,
   savePassword
@@ -359,6 +360,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return { ok: true };
       case "list-passwords":
         return listPasswords();
+      case "get-password": {
+        const record = await getPassword(message.id);
+        if (!record) throw new Error("Password not found");
+        return record;
+      }
       case "passwords-for-origin":
         return getPasswordsForOrigin(message.origin);
       case "save-password":

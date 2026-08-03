@@ -109,6 +109,23 @@ function renderPasskeys() {
   }
 }
 
+async function copyTextToClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  document.body.appendChild(textarea);
+  textarea.select();
+  const ok = document.execCommand("copy");
+  textarea.remove();
+  if (!ok) throw new Error("Clipboard copy failed");
+}
+
 function renderPasswords() {
   passwordList.innerHTML = "";
   const items = filteredPasswords();
@@ -136,6 +153,31 @@ function renderPasswords() {
     const actions = document.createElement("div");
     actions.className = "actions";
     actions.style.marginTop = "8px";
+
+    const copy = document.createElement("button");
+    copy.className = "btn secondary";
+    copy.type = "button";
+    copy.textContent = "Copy";
+    copy.addEventListener("click", async () => {
+      const previous = copy.textContent;
+      copy.disabled = true;
+      try {
+        const record = await send("get-password", { id: item.id });
+        if (!record?.password) throw new Error("Password is empty");
+        await copyTextToClipboard(record.password);
+        copy.textContent = "Copied";
+        setTimeout(() => {
+          copy.textContent = previous;
+          copy.disabled = false;
+        }, 1500);
+      } catch (err) {
+        copy.textContent = previous;
+        copy.disabled = false;
+        passwordStatus.textContent = err.message;
+        passwordStatus.className = "status err";
+      }
+    });
+
     const del = document.createElement("button");
     del.className = "btn danger";
     del.type = "button";
@@ -145,6 +187,7 @@ function renderPasswords() {
       await send("delete-password", { id: item.id });
       await loadPasswords();
     });
+    actions.appendChild(copy);
     actions.appendChild(del);
     row.appendChild(actions);
     passwordList.appendChild(row);
