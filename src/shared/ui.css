@@ -17,6 +17,11 @@
   box-sizing: border-box;
 }
 
+/* Author display rules (e.g. .stack) otherwise override the UA [hidden] style. */
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   margin: 0;
@@ -96,6 +101,7 @@ label.field {
 input[type="text"],
 input[type="password"],
 input[type="url"],
+input[type="search"],
 select {
   width: 100%;
   border: 1px solid var(--line);

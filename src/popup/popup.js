@@ -15,6 +15,11 @@ const passwordStatus = document.getElementById("passwordStatus");
 const passkeysPanel = document.getElementById("passkeysPanel");
 const passwordsPanel = document.getElementById("passwordsPanel");
 const addPasswordStatus = document.getElementById("addPasswordStatus");
+const listSearch = document.getElementById("listSearch");
+
+let passkeyItems = [];
+let passwordItems = [];
+let activeTab = "passkeys";
 
 async function loadProxy() {
   const state = await send("get-proxy-state");
@@ -40,43 +45,127 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;");
 }
 
+function searchQuery() {
+  return listSearch.value.trim().toLowerCase();
+}
+
+function matchesQuery(fields, query) {
+  if (!query) return true;
+  return fields.some((field) => String(field ?? "").toLowerCase().includes(query));
+}
+
+function filteredPasskeys() {
+  const query = searchQuery();
+  return passkeyItems.filter((item) =>
+    matchesQuery([item.rpId, item.userName, item.userDisplayName, item.credentialId], query)
+  );
+}
+
+function filteredPasswords() {
+  const query = searchQuery();
+  return passwordItems.filter((item) =>
+    matchesQuery([item.origin, item.host, item.username, item.id], query)
+  );
+}
+
+function renderPasskeys() {
+  passkeyList.innerHTML = "";
+  const items = filteredPasskeys();
+  if (!passkeyItems.length) {
+    passkeyStatus.textContent = "No passkeys in OpenBao yet.";
+    return;
+  }
+  if (!items.length) {
+    passkeyStatus.textContent = "No matching passkeys.";
+    return;
+  }
+  passkeyStatus.textContent =
+    items.length === passkeyItems.length
+      ? `${items.length} credential${items.length === 1 ? "" : "s"}`
+      : `${items.length} of ${passkeyItems.length} credential${passkeyItems.length === 1 ? "" : "s"}`;
+  for (const item of items) {
+    const row = document.createElement("div");
+    row.className = "item";
+    row.innerHTML = `
+      <strong>${escapeHtml(item.userDisplayName || item.userName || "Passkey")}</strong>
+      <span>${escapeHtml(item.rpId)}</span>
+      <span>${escapeHtml(item.credentialId)}</span>
+    `;
+    const actions = document.createElement("div");
+    actions.className = "actions";
+    actions.style.marginTop = "8px";
+    const del = document.createElement("button");
+    del.className = "btn danger";
+    del.type = "button";
+    del.textContent = "Delete";
+    del.addEventListener("click", async () => {
+      if (!confirm(`Delete passkey for ${item.rpId}?`)) return;
+      await send("delete-passkey", { credentialId: item.credentialId });
+      await loadPasskeys();
+    });
+    actions.appendChild(del);
+    row.appendChild(actions);
+    passkeyList.appendChild(row);
+  }
+}
+
+function renderPasswords() {
+  passwordList.innerHTML = "";
+  const items = filteredPasswords();
+  if (!passwordItems.length) {
+    passwordStatus.textContent = "No passwords in OpenBao yet.";
+    return;
+  }
+  if (!items.length) {
+    passwordStatus.textContent = "No matching passwords.";
+    return;
+  }
+  passwordStatus.textContent =
+    items.length === passwordItems.length
+      ? `${items.length} password${items.length === 1 ? "" : "s"}`
+      : `${items.length} of ${passwordItems.length} password${passwordItems.length === 1 ? "" : "s"}`;
+  for (const item of items) {
+    const row = document.createElement("div");
+    row.className = "item";
+    const domain = item.origin || item.host || "";
+    row.innerHTML = `
+      <strong>${escapeHtml(domain || "(no origin)")}</strong>
+      <span>${escapeHtml(item.username || "(no username)")}</span>
+      <span>${escapeHtml(item.id)}</span>
+    `;
+    const actions = document.createElement("div");
+    actions.className = "actions";
+    actions.style.marginTop = "8px";
+    const del = document.createElement("button");
+    del.className = "btn danger";
+    del.type = "button";
+    del.textContent = "Delete";
+    del.addEventListener("click", async () => {
+      if (!confirm(`Delete password for ${item.username || item.origin}?`)) return;
+      await send("delete-password", { id: item.id });
+      await loadPasswords();
+    });
+    actions.appendChild(del);
+    row.appendChild(actions);
+    passwordList.appendChild(row);
+  }
+}
+
+function applySearch() {
+  if (activeTab === "passkeys") renderPasskeys();
+  else renderPasswords();
+}
+
 async function loadPasskeys({ requestPermission = false } = {}) {
   passkeyStatus.textContent = "Loading…";
   passkeyStatus.className = "status";
   passkeyList.innerHTML = "";
   try {
     if (requestPermission) await ensureAccessFromGesture();
-    const items = await send("list-passkeys");
-    if (!items.length) {
-      passkeyStatus.textContent = "No passkeys in OpenBao yet.";
-      return;
-    }
-    passkeyStatus.textContent = `${items.length} credential${items.length === 1 ? "" : "s"}`;
-    for (const item of items) {
-      const row = document.createElement("div");
-      row.className = "item";
-      row.innerHTML = `
-        <strong>${escapeHtml(item.userDisplayName || item.userName || "Passkey")}</strong>
-        <span>${escapeHtml(item.rpId)}</span>
-        <span>${escapeHtml(item.credentialId)}</span>
-      `;
-      const actions = document.createElement("div");
-      actions.className = "actions";
-      actions.style.marginTop = "8px";
-      const del = document.createElement("button");
-      del.className = "btn danger";
-      del.type = "button";
-      del.textContent = "Delete";
-      del.addEventListener("click", async () => {
-        if (!confirm(`Delete passkey for ${item.rpId}?`)) return;
-        await send("delete-passkey", { credentialId: item.credentialId });
-        await loadPasskeys();
-      });
-      actions.appendChild(del);
-      row.appendChild(actions);
-      passkeyList.appendChild(row);
-    }
+    passkeyItems = await send("list-passkeys");
+    renderPasskeys();
   } catch (err) {
+    passkeyItems = [];
     passkeyStatus.textContent = err.message;
     passkeyStatus.className = "status err";
   }
@@ -88,43 +177,17 @@ async function loadPasswords({ requestPermission = false } = {}) {
   passwordList.innerHTML = "";
   try {
     if (requestPermission) await ensureAccessFromGesture();
-    const items = await send("list-passwords");
-    if (!items.length) {
-      passwordStatus.textContent = "No passwords in OpenBao yet.";
-      return;
-    }
-    passwordStatus.textContent = `${items.length} password${items.length === 1 ? "" : "s"}`;
-    for (const item of items) {
-      const row = document.createElement("div");
-      row.className = "item";
-      row.innerHTML = `
-        <strong>${escapeHtml(item.username || "(no username)")}</strong>
-        <span>${escapeHtml(item.origin || item.host || "")}</span>
-        <span>${escapeHtml(item.id)}</span>
-      `;
-      const actions = document.createElement("div");
-      actions.className = "actions";
-      actions.style.marginTop = "8px";
-      const del = document.createElement("button");
-      del.className = "btn danger";
-      del.type = "button";
-      del.textContent = "Delete";
-      del.addEventListener("click", async () => {
-        if (!confirm(`Delete password for ${item.username || item.origin}?`)) return;
-        await send("delete-password", { id: item.id });
-        await loadPasswords();
-      });
-      actions.appendChild(del);
-      row.appendChild(actions);
-      passwordList.appendChild(row);
-    }
+    passwordItems = await send("list-passwords");
+    renderPasswords();
   } catch (err) {
+    passwordItems = [];
     passwordStatus.textContent = err.message;
     passwordStatus.className = "status err";
   }
 }
 
 function setTab(name) {
+  activeTab = name;
   for (const tab of document.querySelectorAll(".tab")) {
     const active = tab.dataset.tab === name;
     tab.classList.toggle("active", active);
@@ -132,11 +195,14 @@ function setTab(name) {
   }
   passkeysPanel.hidden = name !== "passkeys";
   passwordsPanel.hidden = name !== "passwords";
+  applySearch();
 }
 
 for (const tab of document.querySelectorAll(".tab")) {
   tab.addEventListener("click", () => setTab(tab.dataset.tab));
 }
+
+listSearch.addEventListener("input", applySearch);
 
 proxyToggle.addEventListener("change", async () => {
   proxyStatus.textContent = "Updating…";
