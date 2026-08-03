@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="../shared/ui.css" />
     <style>
       body {
-        width: 360px;
+        width: 380px;
       }
     </style>
   </head>
@@ -32,13 +32,43 @@
         <p class="status" id="proxyStatus"></p>
       </section>
 
-      <section class="card stack">
+      <div class="tabs" role="tablist">
+        <button class="tab active" type="button" data-tab="passkeys" role="tab" aria-selected="true">Passkeys</button>
+        <button class="tab" type="button" data-tab="passwords" role="tab" aria-selected="false">Passwords</button>
+      </div>
+
+      <section class="card stack" id="passkeysPanel">
         <div class="row">
           <strong>Stored passkeys</strong>
-          <button class="btn linkish" id="refreshBtn" type="button">Refresh</button>
+          <button class="btn linkish" id="refreshPasskeysBtn" type="button">Refresh</button>
         </div>
-        <div class="list" id="list"></div>
-        <p class="status" id="listStatus">Loading…</p>
+        <div class="list" id="passkeyList"></div>
+        <p class="status" id="passkeyStatus">Loading…</p>
+      </section>
+
+      <section class="card stack" id="passwordsPanel" hidden>
+        <div class="row">
+          <strong>Stored passwords</strong>
+          <button class="btn linkish" id="refreshPasswordsBtn" type="button">Refresh</button>
+        </div>
+        <form class="stack" id="addPasswordForm">
+          <label class="field">
+            Origin
+            <input id="newOrigin" type="url" placeholder="https://example.com" required />
+          </label>
+          <label class="field">
+            Username
+            <input id="newUsername" type="text" autocomplete="off" />
+          </label>
+          <label class="field">
+            Password
+            <input id="newPassword" type="password" autocomplete="new-password" required />
+          </label>
+          <button class="btn" type="submit">Save password</button>
+          <p class="status" id="addPasswordStatus"></p>
+        </form>
+        <div class="list" id="passwordList"></div>
+        <p class="status" id="passwordStatus">Loading…</p>
       </section>
 
       <div class="actions">

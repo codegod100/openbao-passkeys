@@ -6,6 +6,9 @@ const DEFAULTS = {
   secretId: "",
   kvMount: "secret",
   pathPrefix: "passkeys",
+  passwordPathPrefix: "passwords",
+  autofillEnabled: true,
+  savePromptEnabled: true,
   proxyEnabled: false,
   aaguid: "6f70656e-6261-6f70-6173-736b65797301"
 };

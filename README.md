@@ -1,27 +1,34 @@
 # OpenBao Passkeys
 
-Chrome extension (Manifest V3) that acts as a software passkey authenticator and stores credential material in [OpenBao](https://openbao.org/) KV v2.
+Chrome extension (Manifest V3) that stores **passkeys** and **passwords** in [OpenBao](https://openbao.org/) KV v2.
 
-## What it does
+## Features
 
-- Creates ES256 passkeys and stores the private key (JWK) plus WebAuthn metadata in OpenBao
-- Signs assertions for stored credentials
-- Lists / deletes passkeys from a popup manager
-- Optionally attaches Chrome’s `webAuthenticationProxy` so site `navigator.credentials.create()` / `.get()` calls are handled by this extension (with an approval prompt)
-
-When the proxy is **off**, the browser uses normal platform/security-key authenticators. Turn the proxy **on** only when you want OpenBao-backed passkeys to answer WebAuthn prompts.
+- **Passkeys** — ES256 software authenticator; private keys live in OpenBao
+- **WebAuthn proxy** — optional `webAuthenticationProxy` so site create/get prompts are handled here
+- **Passwords** — save / list / delete logins in OpenBao
+- **Autofill** — content script offers matching logins on username/password fields
+- **Save prompt** — after form submit / login button, offers to store the credentials
 
 ## Load the extension
 
 1. Open `chrome://extensions`
 2. Enable **Developer mode**
 3. **Load unpacked** → select this directory
+4. Accept site access (needed for autofill on `http(s)` pages)
 
 ## Configure OpenBao
 
-1. Click the extension → **OpenBao settings**
-2. Set URL (default `http://127.0.0.1:8200`), auth method, KV mount, and path prefix
+1. Extension popup → **OpenBao settings**
+2. Set URL, auth (token or AppRole), KV mount, path prefixes
 3. **Test connection**, then **Save**
+
+Defaults:
+
+| Kind | Path |
+|------|------|
+| Passkeys | `secret/data/passkeys/<credentialId>` |
+| Passwords | `secret/data/passwords/<id>` |
 
 ### Minimal local OpenBao (dev)
 
@@ -29,36 +36,28 @@ When the proxy is **off**, the browser uses normal platform/security-key authent
 docker run --rm -p 8200:8200 -e BAO_DEV_ROOT_TOKEN_ID=root openbao/openbao:latest server -dev -dev-listen-address=0.0.0.0:8200
 ```
 
-Then in another shell:
-
-```bash
-export BAO_ADDR=http://127.0.0.1:8200
-export BAO_TOKEN=root
-bao secrets enable -path=secret kv-v2   # often already enabled in -dev
-```
-
-In the extension settings:
-
-- URL: `http://127.0.0.1:8200`
-- Auth: Token → `root`
-- KV mount: `secret`
-- Path prefix: `passkeys`
-
-Secrets land at `secret/data/passkeys/<credentialId>`.
+Extension settings: URL `http://127.0.0.1:8200`, token `root`, mount `secret`.
 
 ## Usage
 
-1. Connect OpenBao and confirm **Test connection** succeeds
-2. In the popup, enable **Intercept WebAuthn**
-3. On a site that registers a passkey, approve the extension prompt
-4. Later sign-ins for that RP will list matching OpenBao credentials
+### Passkeys
+
+1. Enable **Intercept WebAuthn** in the popup
+2. Register / authenticate on a site (e.g. webauthn.io) and approve the prompt
+
+### Passwords
+
+1. Log in on a site → click **Save** on the OpenBao prompt, **or** add one from the popup **Passwords** tab
+2. Focus a login field → choose a saved credential from the dropdown
+
+Autofill and save prompts can be toggled in settings.
 
 ## Security notes
 
-- Private keys live in OpenBao; the extension fetches them to sign and writes back `signCount`
-- Prefer AppRole (or a narrowly scoped token) over a root token outside local testing
-- Proxy mode suspends normal browser WebAuthn handling while attached — detach when finished
-- This is an MVP software authenticator (`attestation: none`), not a certified hardware authenticator
+- Secrets are fetched from OpenBao when needed; passkey private keys and passwords are not mirrored into `chrome.storage`
+- Prefer AppRole or a narrowly scoped token outside local testing
+- WebAuthn proxy suspends normal browser passkey handling while attached
+- Autofill runs in page context for the current origin only
 
 ## Layout
 
@@ -66,9 +65,10 @@ Secrets land at `secret/data/passkeys/<credentialId>`.
 manifest.json
 src/
   background/service-worker.js
-  lib/          # OpenBao client, WebAuthn crypto, settings
-  popup/        # credential list + proxy toggle
+  content/autofill.js
+  lib/          # OpenBao client, WebAuthn, passwords, settings
+  popup/        # passkeys + passwords manager
   options/      # OpenBao connection
-  approve/      # create/get consent UI
+  approve/      # WebAuthn consent UI
 icons/
 ```

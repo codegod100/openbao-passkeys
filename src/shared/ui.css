@@ -207,6 +207,31 @@ select:focus {
   flex-wrap: wrap;
 }
 
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.tab {
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  padding: 8px 10px;
+  cursor: pointer;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+
 .page {
   max-width: 720px;
   margin: 0 auto;

@@ -31,7 +31,7 @@ async function parseResponse(response) {
   return payload;
 }
 
-async function request(path, { method = "GET", body, token, baseUrl } = {}) {
+export async function request(path, { method = "GET", body, token, baseUrl } = {}) {
   const settings = await getSettings();
   const root = (baseUrl || settings.openbaoUrl).replace(/\/+$/, "");
   const headers = { "Content-Type": "application/json" };
@@ -84,68 +84,94 @@ async function resolveToken(settings) {
   return clientToken;
 }
 
-function kvDataPath(settings, credentialId) {
-  const mount = settings.kvMount.replace(/^\/+|\/+$/g, "");
-  const prefix = settings.pathPrefix.replace(/^\/+|\/+$/g, "");
-  return `/v1/${mount}/data/${prefix}/${credentialId}`;
+function cleanSegment(value) {
+  return String(value || "")
+    .replace(/^\/+|\/+$/g, "")
+    .replace(/\.\./g, "");
 }
 
-function kvMetadataPath(settings, credentialId = "") {
-  const mount = settings.kvMount.replace(/^\/+|\/+$/g, "");
-  const prefix = settings.pathPrefix.replace(/^\/+|\/+$/g, "");
-  const suffix = credentialId ? `/${credentialId}` : "";
-  return `/v1/${mount}/metadata/${prefix}${suffix}`;
+export function kvDataPath(settings, prefix, id) {
+  const mount = cleanSegment(settings.kvMount);
+  const path = cleanSegment(prefix);
+  const key = cleanSegment(id);
+  return `/v1/${mount}/data/${path}/${key}`;
 }
 
-export async function testConnection() {
-  const settings = await getSettings();
-  await resolveToken(settings);
-  // Cheap authenticated probe: read sys/health does not need a token on many installs,
-  // so hit a token-required endpoint instead.
-  await request("/v1/auth/token/lookup-self");
-  return { ok: true, url: settings.openbaoUrl, authMethod: settings.authMethod };
+export function kvMetadataPath(settings, prefix, id = "") {
+  const mount = cleanSegment(settings.kvMount);
+  const path = cleanSegment(prefix);
+  const key = cleanSegment(id);
+  const suffix = key ? `/${key}` : "";
+  return `/v1/${mount}/metadata/${path}${suffix}`;
 }
 
-export async function listPasskeys() {
+export async function listKvKeys(prefix) {
   const settings = await getSettings();
   try {
-    const result = await request(`${kvMetadataPath(settings)}?list=true`);
-    const keys = result?.data?.keys || [];
-    const credentials = [];
-    for (const key of keys) {
-      const id = key.replace(/\/$/, "");
-      try {
-        const record = await getPasskey(id);
-        if (record) credentials.push(publicView(record));
-      } catch {
-        // Skip unreadable entries
-      }
-    }
-    return credentials.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+    const result = await request(`${kvMetadataPath(settings, prefix)}?list=true`);
+    return (result?.data?.keys || []).map((key) => key.replace(/\/$/, ""));
   } catch (err) {
     if (err.status === 404) return [];
     throw err;
   }
 }
 
+export async function getKvRecord(prefix, id) {
+  const settings = await getSettings();
+  const result = await request(kvDataPath(settings, prefix, id));
+  return result?.data?.data || null;
+}
+
+export async function putKvRecord(prefix, id, record) {
+  const settings = await getSettings();
+  await request(kvDataPath(settings, prefix, id), {
+    method: "POST",
+    body: { data: record }
+  });
+  return record;
+}
+
+export async function deleteKvRecord(prefix, id) {
+  const settings = await getSettings();
+  await request(kvMetadataPath(settings, prefix, id), { method: "DELETE" });
+}
+
+export async function testConnection() {
+  const settings = await getSettings();
+  await resolveToken(settings);
+  await request("/v1/auth/token/lookup-self");
+  return { ok: true, url: settings.openbaoUrl, authMethod: settings.authMethod };
+}
+
+export async function listPasskeys() {
+  const settings = await getSettings();
+  const keys = await listKvKeys(settings.pathPrefix);
+  const credentials = [];
+  for (const id of keys) {
+    try {
+      const record = await getPasskey(id);
+      if (record) credentials.push(publicView(record));
+    } catch {
+      // Skip unreadable entries
+    }
+  }
+  return credentials.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+}
+
 export async function getPasskey(credentialId) {
   const settings = await getSettings();
-  const result = await request(kvDataPath(settings, credentialId));
-  return result?.data?.data || null;
+  return getKvRecord(settings.pathPrefix, credentialId);
 }
 
 export async function putPasskey(record) {
   const settings = await getSettings();
-  await request(kvDataPath(settings, record.credentialId), {
-    method: "POST",
-    body: { data: record }
-  });
+  await putKvRecord(settings.pathPrefix, record.credentialId, record);
   return publicView(record);
 }
 
 export async function deletePasskey(credentialId) {
   const settings = await getSettings();
-  await request(kvMetadataPath(settings, credentialId), { method: "DELETE" });
+  await deleteKvRecord(settings.pathPrefix, credentialId);
 }
 
 export function publicView(record) {

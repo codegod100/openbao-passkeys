@@ -12,7 +12,7 @@
         <img src="../../icons/icon48.png" alt="" />
         <div>
           <h1>OpenBao connection</h1>
-          <p class="lead">Credentials are written to a KV v2 mount. Token auth is simplest; AppRole is supported for longer-lived setups.</p>
+          <p class="lead">Passkeys and passwords are written to a KV v2 mount. Token auth is simplest; AppRole is supported for longer-lived setups.</p>
         </div>
       </div>
 
@@ -54,8 +54,23 @@
         </label>
 
         <label class="field">
-          Path prefix
+          Passkeys path prefix
           <input id="pathPrefix" type="text" required />
+        </label>
+
+        <label class="field">
+          Passwords path prefix
+          <input id="passwordPathPrefix" type="text" required />
+        </label>
+
+        <label class="toggle">
+          <input type="checkbox" id="autofillEnabled" />
+          Offer autofill on login forms
+        </label>
+
+        <label class="toggle">
+          <input type="checkbox" id="savePromptEnabled" />
+          Prompt to save passwords after login
         </label>
 
         <div class="actions">
@@ -68,9 +83,8 @@
       <section class="card stack" style="margin-top: 14px">
         <strong>OpenBao path layout</strong>
         <p class="muted">
-          Each passkey is stored at
-          <code>&lt;mount&gt;/data/&lt;prefix&gt;/&lt;credentialId&gt;</code>
-          with the private key as a JWK plus WebAuthn metadata (rpId, user handle, sign count).
+          Passkeys: <code>&lt;mount&gt;/data/&lt;passkeys-prefix&gt;/&lt;credentialId&gt;</code><br />
+          Passwords: <code>&lt;mount&gt;/data/&lt;passwords-prefix&gt;/&lt;id&gt;</code>
         </p>
       </section>
     </div>

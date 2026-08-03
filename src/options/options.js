@@ -13,7 +13,10 @@ const fields = {
   roleId: document.getElementById("roleId"),
   secretId: document.getElementById("secretId"),
   kvMount: document.getElementById("kvMount"),
-  pathPrefix: document.getElementById("pathPrefix")
+  pathPrefix: document.getElementById("pathPrefix"),
+  passwordPathPrefix: document.getElementById("passwordPathPrefix"),
+  autofillEnabled: document.getElementById("autofillEnabled"),
+  savePromptEnabled: document.getElementById("savePromptEnabled")
 };
 
 const tokenFields = document.getElementById("tokenFields");
@@ -29,6 +32,9 @@ function readForm() {
     secretId: fields.secretId.value.trim(),
     kvMount: fields.kvMount.value.trim(),
     pathPrefix: fields.pathPrefix.value.trim(),
+    passwordPathPrefix: fields.passwordPathPrefix.value.trim(),
+    autofillEnabled: fields.autofillEnabled.checked,
+    savePromptEnabled: fields.savePromptEnabled.checked,
     cachedToken: "",
     cachedTokenExpiresAt: 0
   };
@@ -86,4 +92,7 @@ fields.roleId.value = settings.roleId || "";
 fields.secretId.value = settings.secretId || "";
 fields.kvMount.value = settings.kvMount || "secret";
 fields.pathPrefix.value = settings.pathPrefix || "passkeys";
+fields.passwordPathPrefix.value = settings.passwordPathPrefix || "passwords";
+fields.autofillEnabled.checked = settings.autofillEnabled !== false;
+fields.savePromptEnabled.checked = settings.savePromptEnabled !== false;
 syncAuthVisibility();

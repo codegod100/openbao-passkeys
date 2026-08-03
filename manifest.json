@@ -1,20 +1,20 @@
 {
   "manifest_version": 3,
   "name": "OpenBao Passkeys",
-  "version": "0.1.0",
-  "description": "Software passkey authenticator that stores credentials in OpenBao.",
+  "version": "0.2.3",
+  "description": "Passkeys and passwords stored in OpenBao, with WebAuthn proxy and form autofill.",
   "minimum_chrome_version": "115",
   "permissions": [
     "storage",
     "tabs",
+    "scripting",
     "webAuthenticationProxy",
     "notifications",
     "alarms"
   ],
-  "optional_host_permissions": [
-    "https://*/*",
-    "http://localhost/*",
-    "http://127.0.0.1/*"
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
   ],
   "background": {
     "service_worker": "src/background/service-worker.js",
@@ -32,6 +32,14 @@
     "page": "src/options/options.html",
     "open_in_tab": true
   },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["src/content/autofill.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
