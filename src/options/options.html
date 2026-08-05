@@ -12,7 +12,7 @@
         <img src="../../icons/icon48.png" alt="" />
         <div>
           <h1>OpenBao connection</h1>
-          <p class="lead">Passkeys and passwords are written to a KV v2 mount. Token auth is simplest; AppRole is supported for longer-lived setups.</p>
+          <p class="lead">Passkeys and passwords are written to a KV v2 mount. Use token, AppRole, or OIDC to authenticate.</p>
         </div>
       </div>
 
@@ -27,6 +27,7 @@
           <select id="authMethod">
             <option value="token">Token</option>
             <option value="approle">AppRole</option>
+            <option value="oidc">OIDC</option>
           </select>
         </label>
 
@@ -46,6 +47,37 @@
             Secret ID
             <input id="secretId" type="password" autocomplete="off" />
           </label>
+        </div>
+
+        <div id="oidcFields" class="stack" hidden>
+          <label class="field">
+            Auth mount path
+            <input id="oidcMount" type="text" placeholder="oidc" autocomplete="off" />
+          </label>
+          <label class="field">
+            Role name
+            <input id="oidcRole" type="text" placeholder="optional if OpenBao has default_role" autocomplete="off" />
+          </label>
+          <label class="field">
+            Redirect URI override
+            <input id="oidcRedirectUri" type="url" placeholder="defaults to extension callback" autocomplete="off" />
+          </label>
+          <p class="muted">
+            Register this redirect URI on the OpenBao OIDC role (<code>allowed_redirect_uris</code>) and your IdP:
+            <br />
+            <code id="oidcDefaultRedirect"></code>
+            <button class="btn linkish" id="copyRedirectBtn" type="button">Copy</button>
+          </p>
+          <p class="muted">
+            Prefer OpenBao <code>callback_mode=direct</code> or <code>device</code> if your IdP rejects
+            <code>chrome-extension://</code> redirect URIs. For direct mode, set the redirect override to
+            <code>&lt;openbao-url&gt;/v1/auth/&lt;mount&gt;/oidc/callback</code>.
+          </p>
+          <div class="actions">
+            <button class="btn" id="oidcLoginBtn" type="button">Sign in with OIDC</button>
+            <button class="btn secondary" id="oidcLogoutBtn" type="button">Sign out</button>
+          </div>
+          <p class="muted" id="oidcSession"></p>
         </div>
 
         <label class="field">
