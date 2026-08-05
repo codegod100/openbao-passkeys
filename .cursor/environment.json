@@ -1,0 +1,17 @@
+{
+  "name": "OpenBao Passkeys",
+  "install": "bash .cursor/install.sh",
+  "terminals": [
+    {
+      "name": "openbao",
+      "command": "bao server -dev -dev-root-token-id=root -dev-listen-address=0.0.0.0:8200",
+      "description": "OpenBao dev server (KV v2 backend for the extension). API at http://127.0.0.1:8200, root token 'root'."
+    }
+  ],
+  "ports": [
+    {
+      "name": "openbao",
+      "port": 8200
+    }
+  ]
+}
