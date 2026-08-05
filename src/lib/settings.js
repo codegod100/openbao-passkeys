@@ -1,9 +1,15 @@
 const DEFAULTS = {
   openbaoUrl: "http://127.0.0.1:8200",
-  authMethod: "token", // token | approle
+  authMethod: "token", // token | approle | oidc
   token: "",
   roleId: "",
   secretId: "",
+  oidcMount: "oidc",
+  oidcRole: "",
+  oidcRedirectUri: "",
+  oidcPending: null,
+  cachedToken: "",
+  cachedTokenExpiresAt: 0,
   kvMount: "secret",
   pathPrefix: "passkeys",
   passwordPathPrefix: "passwords",

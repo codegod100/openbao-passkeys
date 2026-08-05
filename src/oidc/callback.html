@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OpenBao OIDC callback</title>
+    <link rel="stylesheet" href="../shared/ui.css" />
+  </head>
+  <body>
+    <div class="page">
+      <div class="brand">
+        <img src="../../icons/icon48.png" alt="" />
+        <div>
+          <h1>OIDC sign-in</h1>
+          <p class="lead" id="lead">Completing OpenBao login…</p>
+        </div>
+      </div>
+      <section class="card stack">
+        <p class="status" id="status">Exchanging authorization code…</p>
+        <div class="actions">
+          <a class="btn" id="settingsLink" href="../options/options.html">Back to settings</a>
+        </div>
+      </section>
+    </div>
+    <script type="module" src="./callback.js"></script>
+  </body>
+</html>
